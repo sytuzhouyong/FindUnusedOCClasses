@@ -8,14 +8,14 @@
 # author: zhouyong
 # date: 2019-08-15
 
-# 使用步骤：
-# 1. 生成待解析的txt文件: otool -v -o /your/path/to/xxx.app/xxx > /your/path/to/1.txt
-# 2. 运行此脚本: python3.7 /your/path/to/find_unused_oc_classes.py /your/path/to/1.txt
+# 使用方法：
+# 运行此脚本: python3.7 /your/path/to/find_unused_oc_classes.py /your/path/to/app
 
 
 import sys
 import os
 import re
+import subprocess
 from enum import Enum
 
 
@@ -74,19 +74,35 @@ def adjust_class_name(name):
         return name[len('_OBJC_METACLASS_$_'):]
 
 
-if __name__ == '__main__':
-    args = sys.argv
+def createOCInfoFile(app_file_path):
+    current_dir, full_file_name = os.path.split(app_file_path)
+    file_name, file_ext = os.path.splitext(full_file_name)
+    exec_file_path = app_file_path + '/' + file_name
+    # print('file_name = %s, file_ext = %s, exec_file_path = %s' % (file_name, file_ext, exec_file_path))
 
-    macho_file_path = ''
-    if len(args) > 1:
-        macho_file_path = args[1]
+    result = subprocess.Popen(['otool', '-v', '-o', exec_file_path], stdout=subprocess.PIPE)
 
-    exists = os.path.exists(macho_file_path)
-    if not exists:
-        print('file not exist in path: %s' % exists)
-        exit(1)
+    # 是b string 数组
+    output = result.stdout.readlines()
 
-    file = open(macho_file_path, 'r')
+    new_output = []
+    for b_str in output:
+        new_item = b_str.decode('ascii')
+        new_output.append(new_item)
+    # print('new_output = %s' % (new_output))
+
+    output_file_name = 'output.txt'
+    file = open(output_file_name, 'w', -1, 'utf8')
+    file.writelines(new_output)
+    file.flush()
+    file.close()
+
+    current_path = os.path.split(os.path.realpath(__file__))[0]
+    return current_path + '/' + output_file_name
+
+
+def parse_oc_txt_file(txt_file_path):
+    file = open(txt_file_path, 'r')
     lines = file.readlines()
     file.close()
 
@@ -111,3 +127,21 @@ if __name__ == '__main__':
     print('声明但未使用的类如下：（可考虑删除）')
     for key in class_names.keys():
         print('\t%s' % key)
+
+
+if __name__ == '__main__':
+    args = sys.argv
+
+    macho_file_path = ''
+    if len(args) > 1:
+        macho_file_path = args[1]
+
+    exists = os.path.exists(macho_file_path)
+    if not exists:
+        print('file not exist in path: %s' % exists)
+        exit(1)
+
+    file_path = createOCInfoFile(macho_file_path)
+    print(file_path)
+
+    parse_oc_txt_file(file_path)

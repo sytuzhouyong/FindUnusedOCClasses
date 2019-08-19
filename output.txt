@@ -1,4 +1,4 @@
-test:
+/Users/zhouyong/Desktop/test.app/test:
 Contents of (__DATA,__objc_classlist) section
 0000000100095b28 0x1000aa3e0 _OBJC_CLASS_$_AFSecurityPolicy
            isa 0x1000aa408 _OBJC_METACLASS_$_AFSecurityPolicy
