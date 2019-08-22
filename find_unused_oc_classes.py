@@ -51,11 +51,17 @@ def read_section_data(txt_lines, section_name):
         if state != ReadState.SectionBegin:
             continue
 
-        match_obj = re.match(r'^[0-9a-zA-Z]+\s0x[0-9a-zA-Z]+\s\w+', line)
+        match_obj = re.match(r'^[0-9a-zA-Z]+\s0x[0-9a-zA-Z]+[\s\w]*', line)
         if match_obj:
             items = line_strip.split(' ')
             address = items[1]
-            class_name = adjust_class_name(items[2])
+
+            if len(items) < 3:
+                # print('item length < 3')
+                class_name = address
+            else:
+                class_name = adjust_class_name(items[2])
+
             # 0x0表明是系统类，非0x0表明是非系统类
             if address == '0x0':
                 pass
@@ -91,7 +97,7 @@ def createOCInfoFile(app_file_path):
         new_output.append(new_item)
     # print('new_output = %s' % (new_output))
 
-    output_file_name = 'output.txt'
+    output_file_name = file_name + '.txt'
     file = open(output_file_name, 'w', -1, 'utf8')
     file.writelines(new_output)
     file.flush()
